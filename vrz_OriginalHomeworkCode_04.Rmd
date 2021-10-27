@@ -2,18 +2,36 @@
 title: "What's Your Malfunction?"
 author: "Victoria Zdanowicz"
 date: "10/19/2021"
-output: html_document
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 3
+    toc_float: TRUE
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Challenge 1
 
-[1] Write a simple R function, Z.prop.test(), that can perform one- or two-sample Z-tests for proportion data, using the following guidelines:
+>Write a simple R function, Z.prop.test(), that can perform one- or two-sample Z-tests for proportion data, using the following guidelines:
 
-Your function should take the following arguments: p1 and n1 (no default) representing the estimated proportion and sample size (i.e., based on your sample data); p2 and n2 (both defaulting to NULL) that contain a second sample’s proportion and sample size data in the event of a two-sample test; p0 (no default) as the expected value for the population proportion; and alternative (default “two.sided”) and conf.level (default 0.95), to be used in the same way as in the function t.test().
+- p1 and n1 (no default) representing the estimated proportion and sample size (i.e., based on your sample data); p2 and n2 (both defaulting to NULL) that contain a second sample’s proportion and sample size data in the event of a two-sample test; p0 (no default) as the expected value for the population proportion; and alternative (default “two.sided”) and conf.level (default 0.95), to be used in the same way as in the function t.test()
+- When conducting a two-sample test, it should be p1 that is tested as being smaller or larger than p2 when alternative=“less” or alternative=“greater”, the same as in the use of x and y in the function t.test().
+- The function should perform a one-sample Z-test using p1, n1, and p0 if either p2 or n2 (or both) is NULL.
+- The function should contain a check for the rules of thumb we have talked about (n∗p>5 and n∗(1−p)>5) to ensure the validity of assuming the normal distribution in both the one- and two-sample settings. If this is violated, the function should still complete but it should also print an appropriate warning message.
+- The function should return a list containing the members Z (the test statistic), P (the appropriate p value), and CI (the two-sided CI with respect to “conf.level” around p1 in the case of a one-sample test and around p2-p1 in the case of a two-sample test). For all test alternatives (“two.sided”, “greater”, “less”), calculate symmetric CIs based on quantiles of the normal distribution rather than worrying about calculating single-limit confidence bounds.
+
+---
+
+In order to figure out how to create this function I opened up the source code for the prop.test() function. This was extremely helpful in following along the syntax necessary ( **if** , **else** ) and other words needed to organize how the function runs. I found a hard time finding a website that clearly outlined the proper order/syntax to follow when creating a function - I also couldn't find that in any of the modules?
+
+```{r - packages}
+library(dplyr)
+library(curl)
+library(ggplot2)
+```
 
 z = (observed statistic - expected statistic) / standard error
 
@@ -40,9 +58,9 @@ if p2 and/or n2 = NULL -> one-sample z test
 
 z = (p-p0) / √p0(1-p0)/n
 
-how to calculate CI for 2 sample? only see it from prop.test not written out in module
+*how to calculate CI for 2 sample? only see it from prop.test not written out in module*
 
-#My function?
+## My function - z.prop.test()
 
 ```{r - function}
 z.prop.test <- function(p1, n1, p2 = NULL, n2 = NULL, p0, alternative = "two-sided", conf.level = 0.95) 
@@ -50,7 +68,7 @@ z.prop.test <- function(p1, n1, p2 = NULL, n2 = NULL, p0, alternative = "two-sid
 
   if (is.null(p2)|is.null(n2)) {
       Z <- (p1 - p0) / sqrt(p0 * (1-p0)/n1)
-      PVAL <- 1 - pnorm(Z, lower.tail = TRUE) + pnorm(z, lower.tail = FALSE)
+      PVAL <- 1 - pnorm(Z, lower.tail = TRUE) + pnorm(Z, lower.tail = FALSE)
         if ((n1 * p0 < 5) | (n1 * (1 - p0) < 5 ))
         return(warning("check distribution, does not appear normal"))
           lower <- p1 - qnorm(0.975) * sqrt(p1 * (1 - p1)/n1)
@@ -70,90 +88,103 @@ z.prop.test <- function(p1, n1, p2 = NULL, n2 = NULL, p0, alternative = "two-sid
 }
             alpha = 1 - (conf.level/100)
             crit <- qnorm(1 - alpha/2)  # identify critical values
-            test <- p < -crit || p > crit  # boolean test
+            test <- PVAL < -crit || PVAL > crit  # boolean test
             two.sample.prop <- list(z.test.statistic = as.numeric(Z), p.value = as.numeric(PVAL), conf.level = conf.level, critical.value = as.numeric(crit), test = test)
             
             return(two.sample.prop)
 }}
 ```
 
-test this function with sample data from module?
+## One-Sample Test
+
+**Testing this function with sample data from module**
+
 p1 = 0.6
+
 n1 = 30L
 
-```{r - one sample test?}
+```{r - one sample test}
 z.prop.test(0.6, 30, p0 = 0.8, alternative = "two-sided", conf.level = 0.95)
 
 ```
 
-test this function with sample data from module?
+## Two-Sample Test
+
+**Testing this function with sample data from module**
+
 p1 = phat1
+
 n1 = 25
+
 p2 = phat2
+
 n2 = 30
 
-```{r - two sample test?}
+```{r - two sample test}
 z.prop.test(0.56, 25, 0.7, 30, p0 = 0, alternative = "two-sided", conf.level = 0.95)
 
 ```
 
 
-```{r - brain dumping !!!!}
-function (p1, n1, p2 = NULL, n2 = NULL, p0, alternative = "two-sided", conf.level = 0.95) 
+# Challenge 2
 
-  
-  
-  if (is.null(p2)|is.null(n2)) {
-    Z <- (p1 - p0) / sqrt(p0 * (1-p0)/n1)
-    PVAL <- 1 - pnorm(Z, lower.tail = TRUE) + pnorm(z, lower.tail = FALSE)
-  
-      lower <- p1 - qnorm(0.975) * sqrt(p1 * (1 - p1)/n1)
-      upper <- p1 + qnorm(0.975) * sqrt(p1 * (1 - p1)/n1)
-      ci <- c(lower, upper)
-      one.sample.prop <- list(statistic = STATISTIC, parameter = PARAMETER, p.value = as.numeric(PVAL), 
-                         conf.int = ci, alternative = alternative, method = METHOD)
-      return(one.sample.prop)
-  }
-else {
-  pstar <- (p1 + p2)/(n1 + n2)
-  Z <- (p2 - p1)/sqrt((pstar * (1 - pstar)) * (1/length()))
-  PVAL <- 1 - pnorm(Z, lower.tail = TRUE) + pnorm(Z, lower.tail = FALSE)
-  crit <- qnorm(1 - alpha/2)  # identify critical values
-  test <- p < -crit || p > crit  # boolean test
-  test
-}
+>The dataset from Kamilar and Cooper has in it a large number of variables related to life history and body size. For this exercise, the end aim is to fit a simple linear regression model to predict longevity (MaxLongevity_m) measured in months from species’ brain size (Brain_Size_Species_Mean) measured in grams. Do the following for both longevity~brain size and log(longevity)~log(brain size):
 
-p0 <- p0[OK]
-if (any((p0 <= 0) | (p0 >= 1))) 
-  stop("elements of 'p0' must be in (0,1)")
+- Fit the regression model and, using {ggplot2}, produce a scatterplot with the fitted line superimposed upon the data. Append the the fitted model equation to your plot (HINT: use the function geom_text()).
+- Identify and interpret the point estimate of the slope (β1), as well as the outcome of the test associated with the hypotheses H0: β1 = 0; HA: β1 ≠ 0. Also, find a 90 percent CI for the slope (β1) parameter.
+Using your model, add lines for the 90 percent confidence and prediction interval bands on the plot and add a legend to differentiate between the lines.
+- Produce a point estimate and associated 90 percent PI for the longevity of a species whose brain weight is 800 gm. Do you trust the model to predict observations accurately for this value of the explanatory variable? Why or why not?
+Looking at your two models, which do you think is better? Why? *need to use predict() here !! *
 
+pi <- predict(m, newdata = data.frame(weight = 150), interval = "prediction",
+    level = 0.95)  # for a single value
+pi
 
-  PARAMETER <- k - 1
-}
-else {
-  PARAMETER <- k
-  names(NVAL) <- names(ESTIMATE)
-}
-names(PARAMETER) <- "df"
-x <- cbind(x, n - x)
-E <- cbind(n * p, n * (1 - p))
-if (any(E < 5)) 
-  warning("Chi-squared approximation may be incorrect")
-STATISTIC <- sum((abs(x - E) - YATES)^2/E)
-names(STATISTIC) <- "X-squared"
-if (alternative == "two.sided") 
-  PVAL <- pchisq(STATISTIC, PARAMETER, lower.tail = FALSE)
-else {
-  if (k == 1) 
-    z <- sign(ESTIMATE - p) * sqrt(STATISTIC)
-  else z <- sign(DELTA) * sqrt(STATISTIC)
-  PVAL <- pnorm(z, lower.tail = (alternative == "less"))
-}
-RVAL <- list(statistic = STATISTIC, parameter = PARAMETER, 
-             p.value = as.numeric(PVAL), estimate = ESTIMATE, null.value = NVAL, 
-             conf.int = CINT, alternative = alternative, method = METHOD, 
-             data.name = DNAME)
-class(RVAL) <- "htest"
-return(RVAL)
-}
+---
+
+```{r - loading in dataset}
+f <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall21/KamilarAndCooperData.csv")
+d <- read.csv(f, header = TRUE, stringsAsFactors = FALSE)
+d <- na.omit(d)
+longevity <- d$MaxLongevity_m
+brainsize <- d$Brain_Size_Species_Mean
 ```
+
+## Longevity~Brain Size
+```{r - beta}
+beta1 <- cor(d$MaxLongevity_m, d$Brain_Size_Species_Mean) * sd(d$MaxLongevity_m)/sd(d$Brain_Size_Species_Mean)
+beta1
+beta0 <- mean(d$MaxLongevity_m) - beta1 * mean(d$Brain_Size_Species_Mean)
+beta0
+```
+why do I keep getting NA for the equations above??? it is because I needed to omit missing values, check earlier chunk for na.omit
+
+```{r - lm}
+m <- lm(longevity ~ brainsize, data = d)
+m
+g <- ggplot(data = d, aes(x = brainsize, y = longevity))
+g <- g + geom_point()
+g <- g + geom_smooth(method = "lm", formula = y ~ x)
+g
+```
+
+```{r - confidence intervals}
+ci95 <- confint(m, level = 0.95)  # using the results of lm()
+ci95
+```
+
+```{r - 90}
+ci90 <- confint(m, level = 0.90)  # using the results of lm()
+ci90
+```
+
+fit the model by hand? with this?:
+y <- h - mean(h)
+x <- w - mean(w)
+z <- data.frame(cbind(x, y))
+g <- ggplot(data = z, aes(x = x, y = y)) + geom_point()
+g
+?
+
+
+## Log(longevity) ~ Log(brain size)
