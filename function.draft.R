@@ -126,33 +126,11 @@ return(RVAL)
 }
 ```
 
+longevity.prediction <- function(x, beta1, beta0){
+  beta1 * x + beta0
+}
 
-#r - sample code from module 11
-typeII <- function(mu0, muA, sigma, n, alternative = "two.tailed", alpha = 0.05,
-                   k = 1000) {
-  p <- rep(NA, k)  # sets up a vector of empty p values
-  for (i in 1:k) {
-    x <- rnorm(n = n, mean = muA, sd = sigma)  # draw from Ha
-    m <- mean(x)
-    s <- sd(x)
-    z <- (m - mu0)/(s/sqrt(n))  # calculates the Z statistic for the sample drawn from Ha relative to the null distribution
-    if (alternative == "less") {
-      p[i] <- pnorm(z, lower.tail = TRUE)  # calculates the associated p value
-      hyp <- "muA < mu0"
-    }
-    if (alternative == "greater") {
-      p[i] <- pnorm(z, lower.tail = FALSE)
-      hyp <- "muA > mu0"
-    }
-    if (alternative == "two.tailed") {
-      if (z > 0) {
-        p[i] <- 2 * pnorm(z, lower.tail = FALSE)
-      }
-      if (z < 0) {
-        p[i] <- 2 * pnorm(z, lower.tail = TRUE)
-      }
-      hyp <- "muA ≠ mu0"
-    }
-  }
-
+slope.est <- function(x, y, beta0 = 307.7522){
+  cor(y, x) * sd(y)/sd(x)
+}
   

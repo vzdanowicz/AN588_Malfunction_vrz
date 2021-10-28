@@ -1,0 +1,480 @@
+---
+title: "What's Your Malfunction?"
+author: "Victoria Zdanowicz"
+date: "10/19/2021"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 3
+    toc_float: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Challenge 1
+
+>Write a simple R function, Z.prop.test(), that can perform one- or two-sample Z-tests for proportion data, using the following guidelines:
+
+- p1 and n1 (no default) representing the estimated proportion and sample size (i.e., based on your sample data); p2 and n2 (both defaulting to NULL) that contain a second sample’s proportion and sample size data in the event of a two-sample test; p0 (no default) as the expected value for the population proportion; and alternative (default “two.sided”) and conf.level (default 0.95), to be used in the same way as in the function t.test()
+- When conducting a two-sample test, it should be p1 that is tested as being smaller or larger than p2 when alternative=“less” or alternative=“greater”, the same as in the use of x and y in the function t.test().
+- The function should perform a one-sample Z-test using p1, n1, and p0 if either p2 or n2 (or both) is NULL.
+- The function should contain a check for the rules of thumb we have talked about (n∗p>5 and n∗(1−p)>5) to ensure the validity of assuming the normal distribution in both the one- and two-sample settings. If this is violated, the function should still complete but it should also print an appropriate warning message.
+- The function should return a list containing the members Z (the test statistic), P (the appropriate p value), and CI (the two-sided CI with respect to “conf.level” around p1 in the case of a one-sample test and around p2-p1 in the case of a two-sample test). For all test alternatives (“two.sided”, “greater”, “less”), calculate symmetric CIs based on quantiles of the normal distribution rather than worrying about calculating single-limit confidence bounds.
+
+---
+
+In order to figure out how to create this function I opened up the source code for the prop.test() function. This was extremely helpful in following along the syntax necessary ( **if** , **else** ) and other words needed to organize how the function runs. I found a hard time finding a website that clearly outlined the proper order/syntax to follow when creating a function - I also couldn't find that in any of the modules?
+
+```{r - packages}
+library(dplyr)
+library(curl)
+library(ggplot2)
+library(gridExtra)
+```
+
+z = (observed statistic - expected statistic) / standard error
+
+my.func <- function(arg1, arg2, arg3, ...) {
+<commands>
+return(output.object)
+}
+
+z.prop.test() <- function(p1, n1, p2=NULL, n2=NULL, p0, alternative = "two.sided", conf.level=0.95)
+p1<- sum(v1)/n1
+n1 <- length(v1)
+p2 <- mean(v2)
+n2 <- length(v2)
+p0 = pi (expected proportion)
+
+z1 <- (p1 - p0)/sqrt(1 - p0)/n1
+
+pval <- 1 - pnorm(z1, lower.tail = TRUE) + pnorm(z1, lower.tail = FALSE)
+pval
+
+if(!is.numeric(c(a1, r, n))) return("The parameters must be numbers")
+
+if p2 and/or n2 = NULL -> one-sample z test
+
+z = (p-p0) / √p0(1-p0)/n
+
+
+
+## My function - z.prop.test()
+
+```{r - function}
+z.prop.test <- function(p1, n1, p2 = NULL, n2 = NULL, p0, alternative = "two.sided", conf.level = 0.95) 
+{
+
+#one-sample test
+if (is.null(p2)|is.null(n2)) {
+  
+  Z <- (p1 - p0) / sqrt(p0 * (1-p0)/n1) #calculating z-statistic
+   
+   #must consider test alternatives
+    if (alternative == "less") {
+      PVAL <- pnorm(Z, lower.tail = TRUE)
+    }
+    if (alternative == "greater") {
+      PVAL <- pnorm(Z, lower.tail = FALSE)
+    }
+    if (alternative == "two.sided") {
+      PVAL <- 1 - pnorm(Z, lower.tail = TRUE) + pnorm(Z, lower.tail = FALSE)
+    }
+        #checking validity of assuming normal distribution
+        if ((n1 * p0 < 5) | (n1 * (1 - p0) < 5 )){
+        message("Warning: check distribution, does not appear normal")
+        }
+  
+  #calculating confidence interval        
+  lower <- p1 - qnorm(0.975) * sqrt(p1 * (1 - p1)/n1)
+  upper <- p1 + qnorm(0.975) * sqrt(p1 * (1 - p1)/n1)
+  ci <- c(lower, upper)
+  
+  #creating list of z-test results & print
+  one.sample.prop <- list(test.type = "One-Sample Proportion Test", alternative = alternative, z.test.statistic = as.numeric(Z), p.value = as.numeric(PVAL), confidence.interval = ci)
+          
+  return(one.sample.prop)
+          }
+
+#two-sample test  
+else  {
+  
+  pstar <- ((p1*n1) + (p2*n2))/(n1 + n2) #need to multiply proportion by n to get sum for pooled proportion
+  
+  Z <- (p2 - p1)/sqrt((pstar * (1 - pstar)) * (1/n1 + 1/n2)) #calculating z-statistic
+      
+    #must consider test alternatives
+    if (alternative == "less") {
+      PVAL <- pnorm(Z, lower.tail = TRUE)
+    }
+    if (alternative == "greater") {
+      PVAL <- pnorm(Z, lower.tail = FALSE)
+    }
+    if (alternative == "two.sided") {
+      PVAL <- 1 - pnorm(Z, lower.tail = TRUE) + pnorm(Z, lower.tail = FALSE)
+    }
+        #checking validity of assuming normal distribution
+        if ((n1 * p0 < 5) | (n1 * (1 - p0) < 5 ) | (n2 * p0 < 5) | (n2 * (1 - p0) < 5)){
+        message("Warning: check distribution, does not appear normal")
+}
+
+  alpha = 1 - (conf.level)
+  crit <- qnorm(1 - alpha/2)  # identify critical values
+  test <- PVAL < -crit || PVAL > crit  # boolean test
+  
+  #calculating confidence interval    
+  upper <- (p1 - p2) + (crit) * (sqrt((p1*(1-p1)/n1) + (p2 * (1-p2)/n2)))
+  lower <- (p1 - p2) - (crit) * (sqrt((p1*(1-p1)/n1) + (p2 * (1-p2)/n2)))
+  ci <- c(lower, upper)
+            
+   #creating list of z-test results & print
+  two.sample.prop <- list(test.type = "Two-Sample Proportion Test", alternative = alternative, z.test.statistic = as.numeric(Z), p.value = as.numeric(PVAL), confidence.interval = ci, critical.value = as.numeric(crit), test = test)
+            
+    return(two.sample.prop)
+}}
+```
+
+## One-Sample Test
+
+**Testing this function with sample data from module**
+
+A neotropical ornithologist working in the western Amazon deploys 30 mist nets in a 100 hectare (ha) grid. She monitors the nets on one morning and records whether or not a she captures any birds in the net (i.e., a “success” or “failure” for every net during a netting session). The following vector summarizes her netting results:
+
+```{r - sample vector}
+v <- c(0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1)
+```
+
+Her netting success over the previous three seasons suggests that she should catch birds in **80%** of her nets. This season, she feels, her success rate is lower than in previous years. Does her trapping data support this hypothesis?
+
+- p1 = 0.6
+- n1 = 30
+- p0 = 0.8
+
+```{r - one sample test}
+z.prop.test(0.6, 30, p0 = 0.8, alternative = "less", conf.level = 0.95) #alternative = 'less' because testing if 0.8 is in lower tail
+```
+These values match those from Module 10 and the p-value from the prop test below:
+
+```{r - match prop test}
+ptest <- prop.test(x = sum(v), n = length(v), p = 0.8, conf.level = 0.95, correct = FALSE,
+    alternative = "less")
+ptest
+```
+
+## Two-Sample Test
+
+**Testing this function with sample data from module**
+
+A biologist studying two species of tropical bats captures females of both species in a mist net over the course of week of nightly netting. For each species, the researcher records whether females are lactating or not. The two vectors below summarize the data for each species.
+
+```{r - bat prop}
+v1 <- c(1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0)
+v2 <- c(1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1)
+```
+
+- phat1 = mean(v1) = p1 = 0.56
+- n1 = length(v1) = 25
+- phat2 = mean(v2) = p2 = 0.7
+- n2 = length(v2) = 30
+
+```{r - two sample test}
+z.prop.test(0.56, 25, 0.7, 30, p0 = 0, alternative = "two.sided", conf.level = 0.95)
+
+```
+
+These values match those from Module 10 and the p-value from the prop test below:
+
+``` {r - match prop 2}
+ptest2 <- prop.test(x = c(sum(v1), sum(v2)), n = c(length(v1), length(v2)), alternative = "two.sided",
+    correct = FALSE)
+ptest2
+```
+
+--- 
+
+# Challenge 2
+
+>The dataset from Kamilar and Cooper has in it a large number of variables related to life history and body size. For this exercise, the end aim is to fit a simple linear regression model to predict longevity (MaxLongevity_m) measured in months from species’ brain size (Brain_Size_Species_Mean) measured in grams. Do the following for both longevity~brain size and log(longevity)~log(brain size):
+
+- Fit the regression model and, using {ggplot2}, produce a scatterplot with the fitted line superimposed upon the data. Append the the fitted model equation to your plot (HINT: use the function geom_text()).
+- Identify and interpret the point estimate of the slope (β1), as well as the outcome of the test associated with the hypotheses H0: β1 = 0; HA: β1 ≠ 0. Also, find a 90 percent CI for the slope (β1) parameter.
+- Using your model, add lines for the 90 percent confidence and prediction interval bands on the plot and add a legend to differentiate between the lines.
+- Produce a point estimate and associated 90 percent PI for the longevity of a species whose brain weight is 800 gm. Do you trust the model to predict observations accurately for this value of the explanatory variable? Why or why not?
+Looking at your two models, which do you think is better? Why? *need to use predict() here !! *
+
+pi <- predict(m, newdata = data.frame(weight = 150), interval = "prediction",
+    level = 0.95)  # for a single value
+pi
+
+---
+
+```{r - loading in dataset}
+f <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall21/KamilarAndCooperData.csv")
+d <- read.csv(f, header = TRUE, stringsAsFactors = FALSE)
+head(d)
+```
+
+## Longevity~Brain Size
+
+### Fitting the regression model
+I first cleaned the data, removing any NA/missing values to avoid calculation errors. I also pulled out the desired *predictor* and *response* variable data into objects **x** and **y**.
+```{r - prepare data}
+d <- na.omit(d) 
+
+x <- d$Brain_Size_Species_Mean #predictor
+y <- d$MaxLongevity_m #response
+```
+
+I then used the code from Module 11 to determine the regression slope(beta1) and intercept(beta0)
+```{r - beta values}
+beta1 <- cor(y, x) * sd(y)/sd(x) 
+beta0 <- mean(y) - beta1 * mean(x)
+
+beta.values <- list(Slope = as.numeric(beta1), Intercept = as.numeric(beta0))
+print(beta.values)
+```
+
+You can then use the beta values and the predictor data, **x**, to determine the regression line. 
+The regression line equation is:
+y = beta1(x)+beta0... aka *y = slope(x) + intercept*
+
+```{r - regression line by hand}
+yhat.regression <- beta1 * x + beta0
+yhat.regression
+Regression.equation <- paste("y = ",beta1, "* x + ", beta0)
+Regression.equation
+```
+
+Can also determine regression using lm() function, which is much faster/cleaner...
+```{r - lm}
+m <- lm(y ~ x, data = d)
+summary(m)
+```
+
+Next - I used used ggplot to create a scatterplot with the fitted regression line superimposed upon the data. I added the regression equation based on the object *Regression.equation* I made above.
+
+```{r - regress plot}
+plot1a <- ggplot(data = d, aes(x = x, y = y)) + theme_minimal() +
+            geom_point() +
+            labs(x = "Mean Species Brain Size", y = "Max Longevity", size = 14) +
+            geom_smooth(method = "lm", formula = y ~ x) +
+            geom_text(x = 175, y = 715, label= Regression.equation)
+plot1a
+```
+
+I found another way to get the equation by installing the package (ggpmisc), which I found on Stack Overflow (https://stackoverflow.com/questions/7549694/add-regression-line-equation-and-r2-on-graph) when trying to figure out how to show the regression equation on the plot. With this package, I can use *stat_poly_eq()* to label the line equation of my formula *y ~ x* .
+
+```{r - regression with pkg equation}
+library(ggpmisc)
+
+plot1b <- ggplot(data = d, aes(x = x, y = y)) + theme_minimal() +
+            geom_point() +
+            labs(x = "Mean Species Brain Size", y = "Max Longevity", size = 14) +
+            geom_smooth(method = "lm", formula = y ~ x) +
+            stat_poly_eq(formula = y ~ x, aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")), parse = TRUE) 
+plot1b
+```
+
+
+### Identify & Interpret
+
+As outlined above..
+
+Slope = beta1 = cor(y, x) * sd(y)/sd(x)
+
+Intercept = beta0 = mean(y) - beta1 * mean(x)
+
+```{r - identift/interpret}
+beta.values
+```
+
+- **The intercept, β0, is the PREDICTED value of y when the value of x is zero.** This means that a species with an average brain size of 0 grams is predicted to live a maximum of 307.7522 months. This seems absurd given the fact that an animal can't live with 0 grams of brain matter...
+- **The slope, β1, is EXPECTED CHANGE in units of y for every 1 unit of change in x.** This means that species max longevity is expected to change by one month for every 0.8789 grams of change in brain matter.  
+
+Below is the 90  CI for the slope (β1) parameter.
+```{r - ci90}
+beta1.ci <- confint(m, level = 0.90)  #confint() function uses lm object "m" to calculate confidence intervals.
+beta1.ci
+```
+
+### Adding Confidence & Prediction Intervals
+
+I first created 90% confidence intervals using predict() function from Module 11. 
+```{r - Confidence Intervals}
+ci90 <- predict(m, newdata = data.frame(Brain_Size_Species_Mean = x), interval = "confidence",level = 0.90)
+colnames(ci90) <- c("Fit_CI","Lower_CI","Upper_CI")
+head(ci90)
+```
+
+Next I created 90% predictive intervals using predict() with the argument interval = "prediction"
+```{r - Prediction Intervals}
+pi90 <- predict(m, newdata = data.frame(Brain_Size_Species_Mean = x), interval = "prediction", level = 0.90) 
+colnames(pi90) <- c("Fit_PI","Lower_PI","Upper_PI")
+head(pi90)
+```
+
+I then used cbind() to coerce the confidence and prediction intervals, and longevity and brain size data, into a single dataframe, *interval.plot*
+```{r - interval lines}
+interval.plot <- data.frame(cbind(x, y, ci90, pi90))
+head(interval.plot)
+```
+### Plotting PI/CI
+
+Next, using ggplot, I created a new scatterplot with the 90% Confidence and Prediction Intervals. By using 'color = "Confience"/"Prediction"' I was able to separate the colors for the Prediction and Confidence intervals in the legend. 
+```{r - plot2}
+plot2 <- ggplot(interval.plot, aes(x = x, y = y)) + theme_minimal() +
+          geom_point() + labs(x = "Mean Species Brain Size", y = "Max Longevity", size = 14) +
+          geom_line(aes(x = x, y = Fit_CI, color = "Confidence")) +
+          geom_line(aes(x = x, y = Lower_CI, color = "Confidence")) +
+          geom_line(aes(x = x, y = Upper_CI, color = "Confidence")) +
+          geom_line(aes(x = x, y = Fit_PI, color = "Prediction")) +
+          geom_line(aes(x = x, y = Lower_PI, color = "Prediction")) +
+          geom_line(aes(x = x, y = Upper_PI, color = "Prediction")) +
+        scale_color_manual(name = "Intervals - 90%", values=c("Confidence" = "#FF6600", "Prediction" = "#000066")) #spooky colors !!
+   
+plot2
+```
+
+Point estimate and associated 90 percent CI for the longevity of a species whose brain weight is 800 gm. To solve this, I used the predict() function again.  
+```{r  - point estimate}
+pt.est <- predict(m, newdata = data.frame(x = 800)) 
+pt.est 
+```
+*pt.est* is the single value predicted based on the linear regression, m, (plugging x = 800 into regression line equation). I would not trust this value given the fact that the data in our plots are condensed mostly under 200g, with only  3 points falling above. There is thus little data to strongly support the model beyond 500g. 
+
+## Log(longevity) ~ Log(brain size)
+
+### Fitting the log regression model
+
+Like before, I pulled out the desired *predictor* and *response* variable data from dataframe, d, (with NA/missing values already removed) into objects **xx** and **yy**. During this process, I also transformed the data with function log()
+```{r - prepare log data}
+
+xx <- log(d$Brain_Size_Species_Mean) #log(predictor)
+yy <- log(d$MaxLongevity_m) #log(response)
+```
+
+Using the same code as earlier, only this time with variables **xx** and **yy**, I determined the regression slope(log.beta1) and intercept(log.beta2)
+```{r - log beta values}
+log.beta1 <- cor(yy, xx) * sd(yy)/sd(xx) 
+log.beta0 <- mean(yy) - log.beta1 * mean(xx)
+
+log.beta.values <- list(Slope = as.numeric(log.beta1), Intercept = as.numeric(log.beta0))
+print(log.beta.values)
+```
+
+You can then use the log beta values and the log predictor data, **xx**, to determine the regression line. 
+The regression line equation is:
+yy = beta1(xx)+beta0... aka *y = slope(x) + intercept*
+```{r - log regression line by hand}
+yy.log <- log.beta1 * xx + log.beta0
+yy.log
+log.equation <- paste("yy = ",log.beta1, "* xx + ", log.beta0) #I used paste() here to show the regression line equation
+log.equation
+```
+
+lm() is, again, a much faster way to determine the regression line. 
+```{r - log}
+logm <- lm(yy ~ xx, data = d)
+summary(logm)
+```
+
+From *summary(logm)* we see that the p-value, (0.000458), is less than  0.05 and thus, the predictor variable (brain size) significantly influences the response variable (max longevity). This means we can reject the null  hypothesis..
+
+
+Next - I used used ggplot to create a scatterplot with the fitted log regression line superimposed upon the data. I added the regression equation based on the object *log.equation* I made above with the equation components. 
+
+```{r - log plot1}
+log.plot1 <- ggplot(data = d, aes(x = xx, y = yy)) + theme_minimal() +
+              geom_point() +
+              labs(x = "log(Mean Species Brain Size)", y = "log(Max Longevity)", size = 14) +
+              geom_smooth(method = "lm", formula = y ~ x) +
+              geom_text(x = 5, y = 5.3, label= log.equation)
+log.plot1
+```
+
+
+### Identify & Interpret (log)
+
+As outlined above..
+
+Slope = log.beta1 = cor(yy, xx) * sd(yy)/sd(xx)
+
+Intercept = log.beta0 = mean(yy) - log.beta1 * mean(xx)
+
+```{r - log identift/interpret}
+log.beta.values
+```
+*The log transformed data looks at percentage of difference without the different units (grams and months) confounding our analysis.*
+
+Below is the 90  CI for the log slope (β1) parameter.
+```{r - log ci90}
+log.beta1.ci <- confint(logm, level = 0.90)  #confint() function uses lm object "logm" to calculate confidence intervals.
+log.beta1.ci
+```
+
+### Adding Confidence & Prediction Intervals (log)
+
+I first created 90% confidence intervals using predict() function from Module 11. *data = logm here instead of m*
+```{r - log CI}
+log.ci90 <- predict(logm, newdata = data.frame(Brain_Size_Species_Mean = xx), interval = "confidence",level = 0.90)
+colnames(log.ci90) <- c("Fit_CI","Lower_CI","Upper_CI")
+head(log.ci90)
+```
+
+Next I created 90% predictive intervals using predict() with the argument interval = "prediction"
+```{r - log PI}
+log.pi90 <- predict(logm, newdata = data.frame(Brain_Size_Species_Mean = xx), interval = "prediction", level = 0.90) 
+colnames(log.pi90) <- c("Fit_PI","Lower_PI","Upper_PI")
+head(log.pi90)
+```
+
+I then used cbind() to coerce the confidence and prediction intervals, and log(longevity) and log(brain size) data, into a single dataframe, *log.interval.plot*
+```{r - log plot df}
+log.interval.plot <- data.frame(cbind(xx, yy, log.ci90, log.pi90))
+head(log.interval.plot)
+```
+
+### Plotting log PI/CI
+
+Next, using ggplot, I created a new scatterplot with the 90% Confidence and Prediction Intervals. By using 'color = "Confience"/"Prediction"' I was able to separate the colors for the Prediction and Confidence intervals in the legend. 
+```{r - log.plot2}
+log.plot2 <- ggplot(log.interval.plot, aes(x = xx, y = yy)) + theme_minimal() +
+          geom_point() + labs(x = "log(Mean Species Brain Size)", y = "log(Max Longevity)", size = 14) +
+          geom_line(aes(x = xx, y = Fit_CI, color = "Confidence")) +
+          geom_line(aes(x = xx, y = Lower_CI, color = "Confidence")) +
+          geom_line(aes(x = xx, y = Upper_CI, color = "Confidence")) +
+          geom_line(aes(x = xx, y = Fit_PI, color = "Prediction")) +
+          geom_line(aes(x = xx, y = Lower_PI, color = "Prediction")) +
+          geom_line(aes(x = xx, y = Upper_PI, color = "Prediction")) +
+        scale_color_manual(name = "Intervals - 90%", values=c("Confidence" = "#FF6600", "Prediction" = "#000066")) #spooky colors !!
+   
+log.plot2
+```
+
+Point estimate and associated 90 percent CI for the longevity of a species whose brain weight is 800 gm. To solve this, I used the predict() function again. Instead of just using (xx=800), because I am using log transformed variables, I need to also log transform 800.  
+```{r  - log point estimate}
+log.pt.est <- predict(logm, newdata = data.frame(xx = log(800)))
+log.pt.est 
+```
+*pt.est*is the single value predicted based on the linear regression, m, (plugging xx = log(800) into regression line equation). Because the data was log transformed, the predicted value, 6.4425, is much closer to the known data. You can also see the confidence intervals in the log estimate are much closer to the fit lines, suggesting it is a better representative model.
+
+## Comparing the Models
+
+```{r - comparing the models}
+grid.arrange(plot2, log.plot2, nrow = 1)
+summary(m)
+summary(logm)
+```
+When comparing the two models below, the data clearly looked skewed to the left in the original plot while it is better fitted in the log transformed model. The Confidence Intervals in the log model also appear closer to the fit line and more consistent compared to the flaring interval lines in the left plot. Thus - I think the log transformed model appears to be a more accurate/better fitted model.
+
+## Challenges
+1. This homework took *so* much brain power. I had a hard time getting started with the function building, especially because I only really understood the basic functions we had gone over in class without really getting the proper syntax/arguments. So it took me a while to figure out the right language to use when it came to *else* and *if*. I figured out how to look at the prop.test() source code though, which was **extremely** helpful at understanding the syntax of a complex function. 
+2. It took a lot of trial and error of running my code chunks to see where I was screwing  up the curly brackets and parentheses for my function.. but again, after opening the source code I had an easier time with that.
+3. This assignment felt very different in the sense that I had a really hard time working in the markdown file! I ended up opening up an R.script file to try and work through my function. I found it a bit easier to just mess around with the order of things there as opposed to in the markdown file where I had text explaining my thought process and other code snippets I was pasting and saving for later. 
+4. While opening the prop.test() source code was helpful in many ways, it also made things a *bit* more confusing at times since we were asked to create a function with different variables in the argument than what is included in  the prop.test function argument. It took me a while to think through how each step would be modified based on the variables provided in the argument. At one point - I even was writing on scrap paper to make sure the transformation of my variables made sense!
+5. Lastly, it was not until peer review that I fully realized the confidence intervals  and prediction intervals were different things. It makes a lot of sense now that I went back over Module 11 about two hundred times during the course of this assignment lol. But I for some reason thought the PI in the homework question was a typo.. embarrassing. Once I figured that out though, I felt like I began to really understand how to assess the models and what the predict() function was doing. 
+6. ALSO - two sample proportion confidence intervals... I am not totally confident that I figured those out correctly. In peer review, we  cross-referenced a ton of different online equations and I *think* what we did worked.. but I am not entirely sold on Z in the equation...actually I just went back and changed it again, I think the Z* in a lot of the equations Ive looked at is supposed to be the critical value. So I just updated the function to use the critical value *crit* instead of the z-test statistic value. https://stats.libretexts.org/Bookshelves/Introductory_Statistics/Book%3A_Statistics_Using_Technology_(Kozak)/09%3A_Two-Sample_Interference/9.01%3A_Two_Proportions
+
+**the end**
