@@ -105,7 +105,7 @@ class(RVAL) <- "htest"
 return(RVAL)
 } 
 
-# i've kind of lost you here with this section of code. I see you try to do the rule of thumb test first then I am confuused on what you are trying to do on the second part. 
+# i've kind of lost you here with this section of code. I see you try to do the rule of thumb test first then I am confused on what you are trying to do on the second part. 
 ```
 
 # Just with a quick run through I am getting some errors. Let me see what I can try to improve here. 
