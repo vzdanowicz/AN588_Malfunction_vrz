@@ -25,7 +25,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ---
 
-In order to figure out how to create this function I opened up the source code for the prop.test() function. This was extremely helpful in following along the syntax necessary ( **if** , **else** ) and other words needed to organize how the function runs. I found a hard time finding a website that clearly outlined the proper order/syntax to follow when creating a function - I also couldn't find that in any of the modules?
 
 ```{r - packages}
 library(dplyr)
@@ -34,35 +33,9 @@ library(ggplot2)
 library(gridExtra)
 ```
 
-z = (observed statistic - expected statistic) / standard error
-
-my.func <- function(arg1, arg2, arg3, ...) {
-<commands>
-return(output.object)
-}
-
-z.prop.test() <- function(p1, n1, p2=NULL, n2=NULL, p0, alternative = "two.sided", conf.level=0.95)
-p1<- sum(v1)/n1
-n1 <- length(v1)
-p2 <- mean(v2)
-n2 <- length(v2)
-p0 = pi (expected proportion)
-
-z1 <- (p1 - p0)/sqrt(1 - p0)/n1
-
-pval <- 1 - pnorm(z1, lower.tail = TRUE) + pnorm(z1, lower.tail = FALSE)
-pval
-
-if(!is.numeric(c(a1, r, n))) return("The parameters must be numbers")
-
-if p2 and/or n2 = NULL -> one-sample z test
-
-z = (p-p0) / √p0(1-p0)/n
-
-
-
 ## My function - z.prop.test()
 
+In order to figure out how to create this function I opened up the source code for the prop.test() function. This was extremely helpful in following along the syntax necessary ( **if** , **else** ) and other words needed to organize how the function runs. I found a hard time finding a website that clearly outlined the proper order/syntax to follow when creating a function - I also couldn't find that in any of the modules?
 ```{r - function}
 z.prop.test <- function(p1, n1, p2 = NULL, n2 = NULL, p0, alternative = "two.sided", conf.level = 0.95) 
 {
@@ -184,7 +157,7 @@ z.prop.test(0.56, 25, 0.7, 30, p0 = 0, alternative = "two.sided", conf.level = 0
 
 ```
 
-These values match those from Module 10 and the p-value from the prop test below:
+These values match those from Module 10 and the p-value from the prop test below.... I spent what felt like 10 years trying to figure out why my confidence intervals from z.prop.test were not the same at the prop.test ones when using the same example data. I realized I had the wrong CI formula, but even after I fixed that my intervals were opposite the ones in the module! I then *finally* realized it was because the vector data was entered opposite in the module.. meaning it was entered as **x = c(sum(v2),sum(v1))** which results in all the same variables as my function except  the confidence intervals were inverted. So in the code below, using prop.test with the given data, I entered the data as **x = c(sum(v1)sum(v2))** which FINALLY yields the same confidence intervals! 
 
 ``` {r - match prop 2}
 ptest2 <- prop.test(x = c(sum(v1), sum(v2)), n = c(length(v1), length(v2)), alternative = "two.sided",
@@ -201,13 +174,7 @@ ptest2
 - Fit the regression model and, using {ggplot2}, produce a scatterplot with the fitted line superimposed upon the data. Append the the fitted model equation to your plot (HINT: use the function geom_text()).
 - Identify and interpret the point estimate of the slope (β1), as well as the outcome of the test associated with the hypotheses H0: β1 = 0; HA: β1 ≠ 0. Also, find a 90 percent CI for the slope (β1) parameter.
 - Using your model, add lines for the 90 percent confidence and prediction interval bands on the plot and add a legend to differentiate between the lines.
-- Produce a point estimate and associated 90 percent PI for the longevity of a species whose brain weight is 800 gm. Do you trust the model to predict observations accurately for this value of the explanatory variable? Why or why not?
-Looking at your two models, which do you think is better? Why? *need to use predict() here !! *
-
-pi <- predict(m, newdata = data.frame(weight = 150), interval = "prediction",
-    level = 0.95)  # for a single value
-pi
-
+- Produce a point estimate and associated 90 percent PI for the longevity of a species whose brain weight is 800 gm. 
 ---
 
 ```{r - loading in dataset}
