@@ -136,6 +136,8 @@ ptest <- prop.test(x = sum(v), n = length(v), p = 0.8, conf.level = 0.95, correc
 ptest
 ```
 
+*awesome! good work.*
+
 ## Two-Sample Test
 
 **Testing this function with sample data from module**
