@@ -196,6 +196,8 @@ x <- d$Brain_Size_Species_Mean #predictor
 y <- d$MaxLongevity_m #response
 ```
 
+*good that you annotate these variables-- it seems to be tripping people up on what should be x and what should be y*
+
 I then used the code from Module 11 to determine the regression slope(beta1) and intercept(beta0)
 ```{r - beta values}
 beta1 <- cor(y, x) * sd(y)/sd(x) 
@@ -312,6 +314,8 @@ pt.est <- predict(m, newdata = data.frame(x = 800))
 pt.est 
 ```
 *pt.est* is the single value predicted based on the linear regression, m, (plugging x = 800 into regression line equation). I would not trust this value given the fact that the data in our plots are condensed mostly under 200g, with only  3 points falling above. There is thus little data to strongly support the model beyond 500g. 
+
+*you can probably make the same assumption for your early comment on how a species with no brain can't exist- we just dont have data with that brain size*
 
 ## Log(longevity) ~ Log(brain size)
 
@@ -437,6 +441,8 @@ summary(m)
 summary(logm)
 ```
 When comparing the two models below, the data clearly looked skewed to the left in the original plot while it is better fitted in the log transformed model. The Confidence Intervals in the log model also appear closer to the fit line and more consistent compared to the flaring interval lines in the left plot. Thus - I think the log transformed model appears to be a more accurate/better fitted model.
+
+*great work!*
 
 ## Challenges
 1. This homework took *so* much brain power. I had a hard time getting started with the function building, especially because I only really understood the basic functions we had gone over in class without really getting the proper syntax/arguments. So it took me a while to figure out the right language to use when it came to *else* and *if*. I figured out how to look at the prop.test() source code though, which was **extremely** helpful at understanding the syntax of a complex function. 
